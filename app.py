@@ -42,6 +42,23 @@ def draw_styled_landmarks(image, results):
         mp_drawing.draw_landmarks(image, results.right_hand_landmarks, mp_holistic.HAND_CONNECTIONS, 
                                  mp_drawing.DrawingSpec(color=(245,117,66), thickness=2, circle_radius=4), 
                                  mp_drawing.DrawingSpec(color=(245,66,230), thickness=2, circle_radius=2)) 
+    
+def check_thumbs_up(hand_landmarks):
+    if not hand_landmarks:
+        return False
+        
+    hand = hand_landmarks.landmark
+    
+    # Same logic as before
+    thumb_is_up = hand[4].y < hand[2].y
+    
+    finger_tips = [8, 12, 16, 20]
+    finger_knuckles = [6, 10, 14, 18]
+    
+    others_are_closed = all(hand[tip].y > hand[knuckle].y 
+                            for tip, knuckle in zip(finger_tips, finger_knuckles))
+                            
+    return thumb_is_up and others_are_closed
 
 # Main function
 cap = cv2.VideoCapture(0)
@@ -59,25 +76,17 @@ with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=
         draw_styled_landmarks(image, results)
 
         # GESTURE LOGIC START
-        if results.right_hand_landmarks:
-            hand = results.right_hand_landmarks.landmark
-            
-            # 1. Check the thumb (Tip higher than knuckle)
-            thumb_is_up = hand[4].y < hand[2].y
-            
-            # 2. Check the other 4 fingers (Tips lower than middle joints)
-            finger_tips = [8, 12, 16, 20]
-            finger_knuckles = [6, 10, 14, 18]
-            
-            others_are_closed = all(hand[tip].y > hand[knuckle].y 
-                                    for tip, knuckle in zip(finger_tips, finger_knuckles))
+        # Check Right Hand
+        if check_thumbs_up(results.right_hand_landmarks):
+            cv2.putText(image, 'RIGHT THUMBS UP', (50, 150), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
 
-            # 3. Final decision
-            if thumb_is_up and others_are_closed:
-                cv2.putText(image, 'THUMBS UP!', (50, 150), 
-                            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+        # Check Left Hand
+        if check_thumbs_up(results.left_hand_landmarks):
+            cv2.putText(image, 'LEFT THUMBS UP', (50, 200), # Notice Y is 200 so they don't overlap
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
         # GESTURE LOGIC END
-
+        
         # Show to screen
         cv2.imshow('OpenCV Feed', image)
 
