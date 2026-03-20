@@ -60,6 +60,27 @@ def check_thumbs_up(hand_landmarks):
                             
     return thumb_is_up and others_are_closed
 
+def check_peace_sign(hand_landmarks):
+    if not hand_landmarks:
+        return False
+        
+    hand = hand_landmarks.landmark
+    
+    # 1. Fingers that MUST be UP (Index and Middle)
+    # Tip Y must be smaller than the knuckle Y
+    index_up = hand[8].y < hand[6].y
+    middle_up = hand[12].y < hand[10].y
+    
+    # 2. Fingers that MUST be DOWN (Ring and Pinky)
+    # Tip Y must be larger than the knuckle Y
+    ring_down = hand[16].y > hand[14].y
+    pinky_down = hand[20].y > hand[18].y
+    
+    # 3. Final Check (We ignore the thumb for now to make it easier)
+    if index_up and middle_up and ring_down and pinky_down:
+        return True
+    return False
+
 # Main function
 cap = cv2.VideoCapture(0)
 
@@ -76,15 +97,21 @@ with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=
         draw_styled_landmarks(image, results)
 
         # GESTURE LOGIC START
-        # Check Right Hand
+        
+        # --- Right Hand Checks ---
         if check_thumbs_up(results.right_hand_landmarks):
-            cv2.putText(image, 'RIGHT THUMBS UP', (50, 150), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+            cv2.putText(image, 'R: THUMBS UP', (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+            
+        if check_peace_sign(results.right_hand_landmarks):
+            cv2.putText(image, 'R: PEACE SIGN', (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2)
 
-        # Check Left Hand
+        # --- Left Hand Checks ---
         if check_thumbs_up(results.left_hand_landmarks):
-            cv2.putText(image, 'LEFT THUMBS UP', (50, 200), # Notice Y is 200 so they don't overlap
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+            cv2.putText(image, 'L: THUMBS UP', (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+            
+        if check_peace_sign(results.left_hand_landmarks):
+            cv2.putText(image, 'L: PEACE SIGN', (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2)
+
         # GESTURE LOGIC END
         
         # Show to screen
