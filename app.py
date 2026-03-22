@@ -49,8 +49,20 @@ def check_rock_sign(hand_landmarks):
     return (hand[4].y < hand[2].y and hand[8].y < hand[6].y and hand[20].y < hand[18].y and
             hand[16].y > hand[14].y and hand[12].y > hand[10].y)
 
+def check_stop_sign(hand_landmarks):
+    if not hand_landmarks: return False
+    hand = hand_landmarks.landmark
+    fingers_up = all(hand[tip].y < hand[knuckle].y 
+                     for tip, knuckle in zip([8, 12, 16, 20], [6, 10, 14, 18]))
+    thumb_up = hand[4].y < hand[2].y
+    return fingers_up and thumb_up
+
 # --- MAIN LOOP ---
 cap = cv2.VideoCapture(0)
+
+# Get camera dimensions
+width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+
 with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
     while cap.isOpened():
         ret, frame = cap.read()
@@ -59,27 +71,43 @@ with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=
         image, results = mediapipe_detection(frame, holistic)
         draw_styled_landmarks(image, results)
 
-        # Draw a Black Banner at the top for UI
-        cv2.rectangle(image, (0,0), (1280, 50), (0,0,0), -1)
-
-        # Logic for Right Hand
+        # 1. Determine states for each hand
         right_msg = ""
+        right_stop = False
         if results.right_hand_landmarks:
+            right_stop = check_stop_sign(results.right_hand_landmarks)
             if check_thumbs_up(results.right_hand_landmarks): right_msg = "THUMBS UP"
             elif check_peace_sign(results.right_hand_landmarks): right_msg = "PEACE"
             elif check_rock_sign(results.right_hand_landmarks): right_msg = "ROCK ON"
-        
-        # Logic for Left Hand
+            elif right_stop: right_msg = "STOP / HI"
+
         left_msg = ""
+        left_stop = False
         if results.left_hand_landmarks:
+            left_stop = check_stop_sign(results.left_hand_landmarks)
             if check_thumbs_up(results.left_hand_landmarks): left_msg = "THUMBS UP"
             elif check_peace_sign(results.left_hand_landmarks): left_msg = "PEACE"
             elif check_rock_sign(results.left_hand_landmarks): left_msg = "ROCK ON"
+            elif left_stop: left_msg = "STOP / HI"
 
-        # Show messages in the banner
-        cv2.putText(image, f"Right: {right_msg}", (20, 35), 
+        # 2. INTERACTIVE BANNER LOGIC
+        banner_color = (0, 0, 0) # Default Black
+        if right_stop and left_stop:
+            banner_color = (0, 0, 200) # Emergency Red
+            right_msg = "!!! STOP !!!"
+            left_msg = "!!! STOP !!!"
+        elif right_stop or left_stop:
+            banner_color = (0, 150, 0) # Friendly Green
+
+        # Draw the Banner
+        cv2.rectangle(image, (0,0), (width, 60), banner_color, -1)
+
+        # 3. Show messages in the banner
+        cv2.putText(image, f"Right: {right_msg}", (20, 40), 
                     cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
-        cv2.putText(image, f"Left: {left_msg}", (640, 35), 
+        
+        # Using the width variable to position Left message perfectly
+        cv2.putText(image, f"Left: {left_msg}", (640, 40), 
                     cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
 
         cv2.imshow('Sign Language Recognition', image)
