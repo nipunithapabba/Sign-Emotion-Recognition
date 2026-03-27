@@ -1,5 +1,6 @@
 import cv2
 import mediapipe as mp
+import math # Needed for distance calculation
 
 # Build Keypoints using MP Holistic
 mp_holistic = mp.solutions.holistic 
@@ -57,10 +58,18 @@ def check_stop_sign(hand_landmarks):
     thumb_up = hand[4].y < hand[2].y
     return fingers_up and thumb_up
 
+def check_heart_gesture(results):
+    if not (results.left_hand_landmarks and results.right_hand_landmarks): return False
+    lh, rh = results.left_hand_landmarks.landmark, results.right_hand_landmarks.landmark
+    
+    # Check tips distance + index pointing down + middle fingers closed
+    tips_close = math.dist((lh[4].x, lh[4].y), (rh[4].x, rh[4].y)) < 0.1 and \
+                 math.dist((lh[8].x, lh[8].y), (rh[8].x, rh[8].y)) < 0.1
+    
+    return tips_close and lh[8].y > lh[6].y and rh[8].y > rh[6].y and lh[12].y > lh[10].y
+
 # --- MAIN LOOP ---
 cap = cv2.VideoCapture(0)
-
-# Get camera dimensions
 width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 
 with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
@@ -71,7 +80,7 @@ with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=
         image, results = mediapipe_detection(frame, holistic)
         draw_styled_landmarks(image, results)
 
-        # 1. Determine states for each hand
+        # 1. Determine Individual Hand States
         right_msg = ""
         right_stop = False
         if results.right_hand_landmarks:
@@ -79,7 +88,7 @@ with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=
             if check_thumbs_up(results.right_hand_landmarks): right_msg = "THUMBS UP"
             elif check_peace_sign(results.right_hand_landmarks): right_msg = "PEACE"
             elif check_rock_sign(results.right_hand_landmarks): right_msg = "ROCK ON"
-            elif right_stop: right_msg = "STOP / HI"
+            elif right_stop: right_msg = "HI / STOP"
 
         left_msg = ""
         left_stop = False
@@ -88,27 +97,33 @@ with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=
             if check_thumbs_up(results.left_hand_landmarks): left_msg = "THUMBS UP"
             elif check_peace_sign(results.left_hand_landmarks): left_msg = "PEACE"
             elif check_rock_sign(results.left_hand_landmarks): left_msg = "ROCK ON"
-            elif left_stop: left_msg = "STOP / HI"
+            elif left_stop: left_msg = "HI / STOP"
 
-        # 2. INTERACTIVE BANNER LOGIC
-        banner_color = (0, 0, 0) # Default Black
-        if right_stop and left_stop:
-            banner_color = (0, 0, 200) # Emergency Red
-            right_msg = "!!! STOP !!!"
-            left_msg = "!!! STOP !!!"
+        # 2. INTERACTIVE BANNER LOGIC (Global Gestures)
+        banner_color = (0, 0, 0)
+        central_msg = ""
+        
+        if check_heart_gesture(results):
+            banner_color = (147, 20, 255) # Pink
+            central_msg = "<3 HEART <3"
+        elif right_stop and left_stop:
+            banner_color = (0, 0, 200) # Red
+            central_msg = "!!! STOP !!!"
         elif right_stop or left_stop:
-            banner_color = (0, 150, 0) # Friendly Green
+            banner_color = (0, 150, 0) # Green
 
         # Draw the Banner
         cv2.rectangle(image, (0,0), (width, 60), banner_color, -1)
 
-        # 3. Show messages in the banner
-        cv2.putText(image, f"Right: {right_msg}", (20, 40), 
-                    cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
-        
-        # Using the width variable to position Left message perfectly
-        cv2.putText(image, f"Left: {left_msg}", (640, 40), 
-                    cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+        # 3. Display Messages
+        if central_msg: # If a global gesture (Heart/Stop) is active
+             cv2.putText(image, central_msg, (600, 40), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 3, cv2.LINE_AA)
+        else: # Show individual hand messages
+            cv2.putText(image, f"Right: {right_msg}", (20, 40), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+            cv2.putText(image, f"Left: {left_msg}", (600, 40), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
 
         cv2.imshow('Sign Language Recognition', image)
 
