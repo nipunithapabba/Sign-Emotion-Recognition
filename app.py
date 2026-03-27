@@ -1,3 +1,7 @@
+import sys
+import os
+sys.modules['tensorflow'] = None
+os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
 import cv2
 import mediapipe as mp
 import math # Needed for distance calculation
