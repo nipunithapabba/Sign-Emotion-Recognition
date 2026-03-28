@@ -7,7 +7,8 @@ from sklearn.metrics import accuracy_score
 
 # 1. LOAD DATA
 DATA_PATH = os.path.join('MP_Data') 
-actions = np.array(['A', 'B', 'C']) 
+# Top of train_model.py
+actions = np.array(['A', 'B', 'C', 'D', 'E', 'F']) 
 label_map = {label:num for num, label in enumerate(actions)}
 
 sequences, labels = [], []
@@ -25,7 +26,8 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_
 
 # 3. BUILD THE MODEL (Random Forest)
 # This is a different type of AI that is great for landmark data
-model = RandomForestClassifier(n_estimators=100)
+# Change from 100 to 1000 trees
+model = RandomForestClassifier(n_estimators=1000, max_depth=None, min_samples_split=2)
 
 # 4. TRAIN
 print("AI is learning (Random Forest style)...")

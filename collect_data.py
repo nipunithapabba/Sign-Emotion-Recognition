@@ -1,3 +1,6 @@
+import sys
+# This trick "hides" tensorflow from Mediapipe so it doesn't crash
+sys.modules['tensorflow'] = None
 import cv2
 import numpy as np
 import os
@@ -6,7 +9,7 @@ import time
 
 # 1. SETUP PATHS
 DATA_PATH = os.path.join('MP_Data') 
-actions = np.array(['A', 'B', 'C']) 
+actions = np.array(['A', 'B', 'C', 'D', 'E', 'F']) 
 no_sequences = 30  # 30 samples per letter
 sequence_length = 1 # 1 frame per sample (static)
 
@@ -71,7 +74,7 @@ with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=
 
             # Short break between samples to adjust hand position
             # This makes the AI "smarter" about different angles
-            cv2.waitKey(200) 
+            cv2.waitKey(800) 
 
             if cv2.waitKey(10) & 0xFF == ord('q'):
                 break
