@@ -14,7 +14,7 @@ model = model_dict['model']
 # 2. SETUP MEDIAPIPE
 mp_holistic = mp.solutions.holistic
 mp_drawing = mp.solutions.drawing_utils
-actions = np.array(['A', 'B', 'C', 'D', 'E', 'F']) 
+actions = np.array(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'])
 
 def extract_keypoints(results):
     lh = np.array([[res.x, res.y, res.z] for res in results.left_hand_landmarks.landmark]).flatten() if results.left_hand_landmarks else np.zeros(21*3)

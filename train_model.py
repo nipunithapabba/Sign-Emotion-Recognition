@@ -8,7 +8,7 @@ from sklearn.metrics import accuracy_score
 # 1. LOAD DATA
 DATA_PATH = os.path.join('MP_Data') 
 # Top of train_model.py
-actions = np.array(['A', 'B', 'C', 'D', 'E', 'F']) 
+actions = np.array(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'])
 label_map = {label:num for num, label in enumerate(actions)}
 
 sequences, labels = [], []
