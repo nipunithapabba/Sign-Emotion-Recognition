@@ -9,7 +9,7 @@ import time
 
 # 1. SETUP PATHS
 DATA_PATH = os.path.join('MP_Data') 
-actions = np.array(['E'])
+actions = np.array(['U', 'V', 'W', 'X', 'Y'])
 no_sequences = 60  # 60 samples per letter
 sequence_length = 1 # 1 frame per sample (static)
 
