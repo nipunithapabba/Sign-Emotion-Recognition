@@ -9,8 +9,8 @@ import time
 
 # 1. SETUP PATHS
 DATA_PATH = os.path.join('MP_Data') 
-actions = np.array(['G', 'H', 'I'])
-no_sequences = 30  # 30 samples per letter
+actions = np.array(['E'])
+no_sequences = 60  # 60 samples per letter
 sequence_length = 1 # 1 frame per sample (static)
 
 # Create the folders
