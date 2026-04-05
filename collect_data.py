@@ -9,8 +9,8 @@ import time
 
 # 1. SETUP PATHS
 DATA_PATH = os.path.join('MP_Data') 
-actions = np.array(['U', 'V', 'W', 'X', 'Y'])
-no_sequences = 60  # 60 samples per letter
+actions = np.array(['A', 'B', 'C', 'D', 'E'])
+no_sequences = 100 # 100 samples per letter
 sequence_length = 1 # 1 frame per sample (static)
 
 # Create the folders
@@ -26,10 +26,22 @@ mp_holistic = mp.solutions.holistic
 mp_drawing = mp.solutions.drawing_utils 
 
 def extract_keypoints(results):
-    # Extract 21 points (x,y,z) for each hand. If hand not found, return zeros.
-    lh = np.array([[res.x, res.y, res.z] for res in results.left_hand_landmarks.landmark]).flatten() if results.left_hand_landmarks else np.zeros(21*3)
-    rh = np.array([[res.x, res.y, res.z] for res in results.right_hand_landmarks.landmark]).flatten() if results.right_hand_landmarks else np.zeros(21*3)
-    return np.concatenate([lh, rh])
+    if results.right_hand_landmarks:
+        # Get the wrist (Landmark 0)
+        wrist = results.right_hand_landmarks.landmark[0]
+        # Subtract wrist from every finger so the data is "Relative"
+        rh = np.array([[res.x - wrist.x, res.y - wrist.y, res.z - wrist.z] 
+                      for res in results.right_hand_landmarks.landmark]).flatten()
+    else:
+        # If no right hand, check the left hand
+        if results.left_hand_landmarks:
+            wrist = results.left_hand_landmarks.landmark[0]
+            rh = np.array([[res.x - wrist.x, res.y - wrist.y, res.z - wrist.z] 
+                          for res in results.left_hand_landmarks.landmark]).flatten()
+        else:
+            rh = np.zeros(21*3)
+            
+    return rh # Only returning one hand's worth of data (63 numbers)
 
 # 3. COLLECTION LOOP
 cap = cv2.VideoCapture(0)
