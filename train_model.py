@@ -44,7 +44,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_
 # 3. THE MULTI-LAYER PERCEPTRON (Neural Network)
 # This model is much better at finding patterns in "Relative" (normalized) coordinates
 model = MLPClassifier(
-    hidden_layer_sizes=(128, 64, 32), # 3 Layers of neurons
+    hidden_layer_sizes=(256, 128, 64), # 3 Layers of neurons
     max_iter=2000,                   # Give it plenty of time to learn
     activation='relu',               # Standard "on/off" switch for neurons
     solver='adam',                   # Fast learning algorithm
