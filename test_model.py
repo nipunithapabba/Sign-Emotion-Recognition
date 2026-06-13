@@ -92,6 +92,11 @@ def extract_face_keypoints(results):
                                  [sin_a,  cos_a]])
     coords[:, :2] = coords[:, :2] @ rotation_matrix.T
 
+    # Step 3: Scale — divide by eye distance so face size doesn't matter
+    eye_distance = np.linalg.norm(eye_vec)
+    if eye_distance > 0:
+        coords /= eye_distance
+
     return coords.flatten()
 
 # --- SYSTEM SETTINGS ---

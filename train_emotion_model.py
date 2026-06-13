@@ -12,7 +12,8 @@ DATA_PATH = 'Emotion_Data'
 MODEL_SAVE_PATH = 'emotion_model.p'
 
 # ============================================================
-# LOAD DATA
+# LOAD DATA — picks up all emotions dynamically
+# (Happy/Sad/Surprised = 100 samples, Angry/Neutral = 150)
 # ============================================================
 emotions = sorted([e for e in os.listdir(DATA_PATH)
                    if os.path.isdir(os.path.join(DATA_PATH, e))])
@@ -24,12 +25,12 @@ print("Loading face landmark data...\n")
 sequences, labels = [], []
 
 for emotion in emotions:
-    emotion_folder = os.path.join(DATA_PATH, emotion)
-    samples = [f for f in os.listdir(emotion_folder) if f.endswith('.npy')]
-    print(f"  Loading {len(samples)} samples for: {emotion}")
-    for sample_file in samples:
+    folder = os.path.join(DATA_PATH, emotion)
+    samples = [f for f in os.listdir(folder) if f.endswith('.npy')]
+    print(f"  {emotion}: {len(samples)} samples")
+    for s in samples:
         try:
-            data = np.load(os.path.join(emotion_folder, sample_file))
+            data = np.load(os.path.join(folder, s))
             sequences.append(data)
             labels.append(label_map[emotion])
         except:
@@ -37,10 +38,6 @@ for emotion in emotions:
 
 X = np.array(sequences)
 y = np.array(labels)
-
-if len(X) == 0:
-    print("Error: No data found!")
-    exit()
 
 print(f"\nTotal samples: {len(X)}")
 print(f"Feature size: {X.shape[1]}")
@@ -51,17 +48,16 @@ X_train, X_test, y_train, y_test = train_test_split(
 
 # ============================================================
 # MODEL
-# Bigger network + more iterations for higher accuracy
 # ============================================================
 model = MLPClassifier(
-    hidden_layer_sizes=(512, 256, 128),  # Deeper network than before
+    hidden_layer_sizes=(512, 256, 128),
     activation='relu',
     solver='adam',
-    max_iter=2000,                        # More room to converge
+    max_iter=2000,
     random_state=42,
     early_stopping=True,
     validation_fraction=0.1,
-    n_iter_no_change=20,                  # More patient before stopping
+    n_iter_no_change=20,
     verbose=True
 )
 
@@ -80,10 +76,7 @@ print("=" * 40)
 print("\nPer-emotion breakdown:")
 print(classification_report(y_test, y_pred, target_names=emotions))
 
-# ============================================================
-# SAVE
-# ============================================================
 with open(MODEL_SAVE_PATH, 'wb') as f:
     pickle.dump({'model': model, 'emotions': emotions}, f)
 
-print(f"\n✅ Emotion model saved as '{MODEL_SAVE_PATH}'")
+print(f"\n✅ Saved as '{MODEL_SAVE_PATH}'")
