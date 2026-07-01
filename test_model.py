@@ -249,7 +249,7 @@ with mp_holistic.Holistic(
             sign_label = predicted_char
             sign_box_color = (50, 50, 50)
         else:
-            sign_label = '—'
+            sign_label = '-'
             sign_box_color = (35, 35, 35)
 
         draw_rounded_rect(image, (10, 8), (10 + SIGN_BOX_W, HEADER_H - 8),
@@ -271,12 +271,14 @@ with mp_holistic.Holistic(
         emotion_color = EMOTION_COLORS.get(current_emotion, (80, 80, 80))
         icon = EMOTION_ICONS.get(current_emotion, '')
         ex1 = W - EMOTION_BOX_W - 10
-        draw_rounded_rect(image, (ex1, 8), (W - 10, HEADER_H - 8),
-                          emotion_color, radius=6)
-        cv2.putText(image, 'MOOD', (ex1 + 10, 26),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.45, (200, 200, 200), 1, cv2.LINE_AA)
-        cv2.putText(image, f'{icon}  {current_emotion}', (ex1 + 10, 42),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.75, (255, 255, 255), 2, cv2.LINE_AA)
+        ex2 = W  # flush to right edge — no gap, no clipping
+        cv2.rectangle(image, (ex1, 0), (ex2, HEADER_H), emotion_color, -1)
+        cv2.putText(image, 'MOOD', (ex1 + 12, 20),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.38, (220, 220, 220), 1, cv2.LINE_AA)
+        cv2.putText(image, current_emotion, (ex1 + 12, 43),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.85, (255, 255, 255), 2, cv2.LINE_AA)
+        cv2.putText(image, icon, (ex2 - 46, 43),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.65, (255, 255, 255), 1, cv2.LINE_AA)
 
         # ============================================================
         # UI — BOTTOM TEXT PANEL
